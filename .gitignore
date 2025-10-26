@@ -1,0 +1,6 @@
+__pycache__
+.cache
+.clangd
+linux*
+polyMesh/
+*.backup
