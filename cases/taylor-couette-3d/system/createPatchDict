@@ -1,0 +1,78 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     5.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      createPatchDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Convert interface faces from faceSet to cyclicGGI patches
+// This is run after blockMesh and setSet to set up the GGI interface
+//
+// Usage: createPatch -overwrite
+//
+// Note: foam-extend uses GGI (General Grid Interface), not AMI
+//       - Patch type: cyclicGGI (not cyclicAMI)
+//       - Neighbor keyword: shadowPatch (not neighbourPatch)
+
+// Tolerance used in matching faces. Absolute tolerance is span of
+// face times this factor.
+matchTolerance 1E-3;
+
+// Do a synchronisation of coupled points after creation of any patches.
+// Note: this does not work with points that are on multiple coupled patches
+//       with transformations (i.e. cyclics).
+pointSync false;
+
+// Patches to create
+// Note: foam-extend uses 'patchInfo' at top level and 'dictionary' for patch properties
+patchInfo
+(
+    {
+        // Inner side of GGI interface (rotating zone side)
+        name GGI_inner;
+
+        dictionary
+        {
+            type            cyclicGgi;
+            shadowPatch     GGI_outer;
+            zone            GGI_inner_zone;
+            bridgeOverlap   false;
+            rotationAxis    (0 0 1);
+            rotationAngle   0;
+            separationOffset (0 0 0);
+        }
+
+        constructFrom   set;
+        set             interfaceFaces;
+    }
+
+    {
+        // Outer side of GGI interface (stationary zone side)
+        name GGI_outer;
+
+        dictionary
+        {
+            type            cyclicGgi;
+            shadowPatch     GGI_inner;
+            zone            GGI_outer_zone;
+            bridgeOverlap   false;
+            rotationAxis    (0 0 1);
+            rotationAngle   0;
+            separationOffset (0 0 0);
+        }
+
+        constructFrom   set;
+        set             interfaceFaces;
+    }
+);
+
+// ************************************************************************* //

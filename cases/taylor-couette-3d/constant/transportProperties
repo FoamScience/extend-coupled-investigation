@@ -1,0 +1,30 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     5.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Taylor-Couette Flow Parameters
+// ================================
+// Re = Ω_i * r_i * d / ν = 100
+// where:
+//   Ω_i = 10 rad/s (inner cylinder angular velocity)
+//   r_i = 0.025 m (inner radius)
+//   d = 0.025 m (gap width = r_o - r_i)
+//   ν = Ω_i * r_i * d / Re = 10 * 0.025 * 0.025 / 100 = 6.25e-4 m²/s
+
+transportModel  Newtonian;
+
+nu              nu [ 0 2 -1 0 0 0 0 ] 6.25e-4;
+
+// ************************************************************************* //

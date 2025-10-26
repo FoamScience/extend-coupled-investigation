@@ -1,0 +1,37 @@
+#!/bin/bash
+cd "${0%/*}" || exit 1    # Run from this directory
+set -e
+
+touch case.foam
+if [ $# -lt 1 ]; then
+    echo "Error: script a solver name to run"
+    exit 1
+fi
+solver=$1
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+uv run ./scripts/generate_blockmesh_ggi.py
+runApplication blockMesh
+runApplication checkMesh
+cp -rT 0.orig 0
+runApplication setSet -batch system/setSet.batch
+runApplication setsToZones -noFlipMap
+runApplication potentialFoam
+cp "./system/$solver.controlDict" ./system/controlDict
+cp "./system/$solver.fvSolution" ./system/fvSolution
+echo "Start time: $(date)"
+START_TIME=$(date +%s)
+runApplication "$solver"
+END_TIME=$(date +%s)
+ELAPSED=$((END_TIME - START_TIME))
+echo "End time: $(date)"
+echo "Elapsed time: $ELAPSED seconds"
+echo ""
+
+mkdir -p logs
+cp "log.$solver" logs/
+
+pvpython scripts/extract_data.py
+mv ./data_along_radial.csv "./data_along_radial_$solver.csv"

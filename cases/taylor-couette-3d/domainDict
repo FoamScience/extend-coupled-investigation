@@ -1,0 +1,16 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      domainDict;
+}
+
+mesh {
+    innerRadius 0.025;
+    outerRadius 0.050;
+    interfaceRadius 0.0375;
+    height 0.2;
+    resolution 1.0;
+    omega 10;
+}

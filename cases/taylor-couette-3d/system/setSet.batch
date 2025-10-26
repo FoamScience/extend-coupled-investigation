@@ -1,0 +1,30 @@
+# setSet batch file for Taylor-Couette GGI setup
+# Creates face zones FROM existing GGI patches (following axialTurbine_ggi workflow)
+# Also creates cellZone for MRF rotating region
+#
+# This is run AFTER blockMesh to convert GGI patches to face zones
+# The patches are already defined in blockMeshDict with type cyclicGgi
+#
+# Usage: setSet -batch system/setSet.batch
+
+# ============================================================================
+# Create cellZone for MRF rotating region (inner cylinder)
+# ============================================================================
+# Select all cells inside r_interface = 0.0375 m
+# Then remove cells inside innerWall (r < 0.025 m) to get the annular region
+
+cellSet rotor new cylinderToCell (0 0 -0.1) (0 0 0.3) 0.0375
+cellSet rotor delete cylinderToCell (0 0 -0.1) (0 0 0.3) 0.025
+
+# ============================================================================
+# Create face zones from GGI patches
+# ============================================================================
+# Note: axialTurbine_ggi uses patchToFace to extract faces from existing patches
+
+faceSet GGI_inner_zone new patchToFace GGI_inner
+faceSet GGI_outer_zone new patchToFace GGI_outer
+
+# ============================================================================
+# Done - quit setSet
+# ============================================================================
+quit

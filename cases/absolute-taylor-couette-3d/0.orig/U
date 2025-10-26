@@ -1,0 +1,71 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     5.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+// Initialize with zero velocity (solver will converge to analytical solution)
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    innerWall
+    {
+        // Rotating wall - ABSOLUTE FRAME (no MRF)
+        // Inner cylinder rotates at ω = 10 rad/s about z-axis
+        // At r_i = 0.025 m: tangential velocity = ω × r = 0.25 m/s
+        type            rotatingWallVelocity;
+        origin          (0 0 0);
+        axis            (0 0 1);
+        omega           10;  // rad/s
+    }
+
+    outerWall
+    {
+        // Stationary wall - no-slip condition
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    top
+    {
+        // Top endcap - no-slip condition
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    bottom
+    {
+        // Bottom endcap - no-slip condition
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    GGI_inner
+    {
+        // GGI interface - inner side (rotating zone)
+        // Velocity continuity enforced by GGI
+        type            ggi;
+    }
+
+    GGI_outer
+    {
+        // GGI interface - outer side (stationary zone)
+        // Velocity continuity enforced by GGI
+        type            ggi;
+    }
+}
+
+// ************************************************************************* //

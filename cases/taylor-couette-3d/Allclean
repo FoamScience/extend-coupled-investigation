@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+foamCleanTutorials .
+rm -rf 0 case.foam dynamicCode coupled segregated "*csv" "*png"

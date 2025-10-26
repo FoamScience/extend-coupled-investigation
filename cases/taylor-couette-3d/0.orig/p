@@ -1,0 +1,64 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     5.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+// Internal field initialization
+// For incompressible flow, p is kinematic pressure (p/rho)
+// In rotating flow, pressure gradient balances centrifugal force
+internalField   uniform 0;
+
+boundaryField
+{
+    innerWall
+    {
+        // Zero gradient at inner rotating wall
+        type            fixedValue;
+        value   uniform 0;
+    }
+
+    outerWall
+    {
+        // Zero gradient at outer stationary wall
+        type            zeroGradient;
+    }
+
+    top
+    {
+        // Zero gradient at top endcap
+        type            zeroGradient;
+    }
+
+    bottom
+    {
+        // Zero gradient at bottom endcap
+        type            zeroGradient;
+    }
+
+    GGI_inner
+    {
+        // GGI interface - inner side (rotating zone)
+        type            ggi;
+    }
+
+    GGI_outer
+    {
+        // GGI interface - outer side (stationary zone)
+        type            ggi;
+    }
+}
+
+// ************************************************************************* //
