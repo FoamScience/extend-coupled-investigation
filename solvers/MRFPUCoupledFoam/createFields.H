@@ -52,39 +52,11 @@
         dimensionedVector4("zero", dimless, vector4::zero)
     );
 
-    // MRF requires tensor version of rAU
-    Info<< "Creating field trTU\n" << endl;
-    tmp<volTensorField> trTU
-    (
-        new volTensorField
-        (
-            IOobject
-            (
-                "rAU",
-                runTime.timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensionedTensor("rAU", dimTime, tensor(I))
-        )
-    );
-
     Info<< "Creating field rAU\n" << endl;
-    volScalarField rAU
-    (
-        IOobject
-        (
-            "rAU",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        runTime.deltaT()
-    );
+    // Note: depending on the MRF treatment, only one of the rAU fields
+    // will be used.
+    tmp<volScalarField> trAU;
+    tmp<volTensorField> trTU;
 
     mesh.schemesDict().setFluxRequired(p.name());
     mesh.schemesDict().setFluxRequired("pcorr");

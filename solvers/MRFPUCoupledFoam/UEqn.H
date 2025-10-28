@@ -44,7 +44,8 @@
     else
     {
         // No MRF: simple scalar rAU
-        rAU = 1.0/UEqn.A();
+        trAU = 1.0/UEqn.A();
+        trAU().rename("rAU");
     }
 
     // Under-relax momentum
