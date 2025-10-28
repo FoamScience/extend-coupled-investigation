@@ -83,6 +83,13 @@ SIMPLE
     pRefValue 0;
 }
 
+PIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    pRefCell 0;
+    pRefValue 0;
+}
+
 relaxationFactors
 {
     p               0.3;
