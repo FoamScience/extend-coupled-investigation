@@ -1,0 +1,269 @@
+version: 1.1.1
+
+experiment:
+  name: CoupledVsSegregated
+  description: |
+    Compare segregated and coupled solvers for stead-state rotating
+    flows with MRF support
+
+  parameters:
+
+  ## All tolerances are scaled by 1e-6
+
+  - name: blockTolerance
+    bounds:
+    - 0.01    # -> 1e-8
+    - 10.0    # -> 1e-4
+    parameter_type: float
+
+  - name: pTolerance
+    bounds:
+    - 0.01    # -> 1e-8
+    - 10.0    # -> 1e-4
+    scaling: log
+    parameter_type: float
+
+  - name: UTolerance
+    bounds:
+    - 0.01    # -> 1e-8
+    - 10.0    # -> 1e-4
+    scaling: log
+    parameter_type: float
+
+  ## Number of steady-state iterations
+
+  - name: blockTimeSteps
+    bounds:
+    - 100
+    - 2000
+    parameter_type: int
+
+  - name: simpleTimeSteps
+    bounds:
+    - 100
+    - 2000
+    parameter_type: int
+
+  ## Mesh resolution levels
+
+  - name: simpleResolution
+    values: [1.0, 1.5, 2.0, 2.5, 3.0]
+    parameter_type: float
+
+  - name: blockResolution
+    values: [1.0, 1.5, 2.0, 2.5, 3.0]
+    parameter_type: float
+
+  ## This one is a dummy, holding dependent params
+
+  - name: solver
+    values: ["MRFSimpleFoam", "MRFPUCoupledFoam"]
+    dependent_parameters: 
+      MRFSimpleFoam: ["simpleResolution", "pSolver", "USmoother", "simpleTimeSteps", "pTolerance", "UTolerance" ]
+      MRFPUCoupledFoam: ["blockResolution", "blockSolver", "blockTimeSteps", "blockTolerance", "blockPreconditioner" ]
+    parameter_type: str
+
+    ## The dependent parameters
+
+  - name: blockSolver
+    values: ["AMG", "BiCGStab", "GMRES"]
+    parameter_type: str
+    dependent_parameters: 
+      AMG: ["blockAMGCycle", "blockAMGCoarsening", "blockAMGMinGroupSize", "blockAMGMaxGroupSize"]
+      BiCGStab: []
+      GMRES: ["blockGMRESDirections"]
+  - name: blockPreconditioner
+    values: ["Cholesky", "ILUC0", "diagonal"]
+    parameter_type: str
+  - name: blockGMRESDirections
+    bounds:
+    - 2
+    - 10
+    parameter_type: int
+  - name: blockAMGCycle
+    values: ["F-cycle", "V-cycle", "W-cycle"]
+    parameter_type: str
+  - name: blockAMGCoarsening
+    values: ["AAMG", "SAMG"]
+    parameter_type: str
+  - name: blockAMGMinGroupSize
+    bounds:
+    - 2
+    - 5
+    parameter_type: int
+  - name: blockAMGMaxGroupSize
+    bounds:
+    - 5
+    - 10
+    parameter_type: int
+
+  - name: pSolver
+    values: ["GAMG", "BiCGStab", "GMRES", "PCG"]
+    parameter_type: str
+    dependent_parameters:
+      GAMG: ["pAgglomerator", "pPreconditioner", "pNCellsInCoarsestLevel"]
+      BiCGStab: []
+      GMRES:  ["pGMRESDirections"]
+      PCG:  []
+  - name: pAgglomerator
+    values: ["algebraicPair", "faceAreaPair"]
+    parameter_type: str
+  - name: pPreconditioner
+    values: ["symGaussSeidel", "ILUC0", "DIC", "Cholesky", "DILU"]
+    parameter_type: str
+  - name: pNCellsInCoarsestLevel
+    bounds:
+    - 10
+    - 40
+    parameter_type: int
+  - name: pGMRESDirections
+    bounds:
+    - 2
+    - 10
+    parameter_type: int
+
+  - name: USmoother
+    values: ["GaussSeidel", "DILU"]
+    parameter_type: str
+
+  parameter_constraints: []
+  #- currently not supporting dependent params flexibly, so enforced through param ranges
+  #- "blockAMGMinGroupSize <= blockAMGMaxGroupSize"
+
+trial_generation:
+  method: custom
+  generation_nodes:
+    - node_name: init
+      generator_specs:
+      - generator_enum: SOBOL
+        model_kwargs:
+          seed: 12345
+      transition_criteria:
+        - type: max_trials
+          threshold: 10
+          transition_to: BOM
+          use_all_trials_in_exp: true
+    - node_name: BOM
+      generator_specs:
+        - generator_enum: BOTORCH_MODULAR
+      transition_criteria: []
+                                               
+
+existing_trials:
+  file_path: ''
+
+baseline:
+  parameters:
+    solver: MRFPUCoupledFoam
+    USmoother: GaussSeidel
+    UTolerance: 0.1
+    blockGMRESDirections: 8
+    blockPreconditioner: ILUC0
+    blockResolution: 1.0
+    blockSolver: GMRES
+    blockAMGCycle: V-Cycle
+    blockAMGCoarsening: SAMG
+    blockAMGMinGroupSize: 4
+    blockAMGMaxGroupSize: 6
+    blockTimeSteps: 200
+    blockTolerance: 0.1
+    pGMRESDirections: 8
+    pSolver: GAMG
+    pTolerance: 0.1
+    pAgglomerator: faceAreaPair
+    pPreconditioner: GaussSeidel
+    pNCellsInCoarsestLevel: 20
+    simpleResolution: 1.0
+    simpleTimeSteps: 200
+
+optimization:
+
+  metrics:
+  - name: pError
+    progress: ["/tmp/trials/metric.sh", "pError"]
+    command: ["/tmp/trials/metric.sh", "pError"]
+  - name: UError
+    progress: ["/tmp/trials/metric.sh", "UError"]
+    command: ["/tmp/trials/metric.sh", "UError"]
+  - name: ExecutionTime
+    progress: ["/tmp/trials/metric.sh", "executionTime"]
+    command: ["/tmp/trials/metric.sh", "executionTime"]
+  - name: ContinuityError
+    progress: ["/tmp/trials/metric.sh", "continuityError"]
+    command: ["/tmp/trials/metric.sh", "continuityError"]
+
+  objective: "-pError, -UError, -ExecutionTime"
+
+  outcome_constraints:
+  - pError <= 1.1*baseline
+  - UError <= 1.1*baseline
+  - ExecutionTime <= 1.1*baseline
+
+  case_runner:
+    template_case: ./cases/taylor-couette-3d
+    mode: local
+    runner: ./Allrun_with_solver
+    log_runner: false
+    remote_status_query: null
+    remote_early_stop: null
+    trial_destination: /tmp/trials
+    artifacts_folder: ./artifacts
+
+    file_substitution: []
+
+    variable_substitution:
+    - file: /domainDict
+      parameter_scopes:
+        solver: solver
+        blockResolution: mesh.resolution
+        simpleResolution: mesh.resolution
+    - file: /system/MRFPUCoupledFoam.fvSolution
+      parameter_scopes:
+        blockSolver: solvers.Up.solver 
+        blockPreconditioner: solvers.Up.preconditioner
+        blockTolerance: blockTolerance
+        blockGMRESDirections: solvers.Up.nDirections
+        blockAMGCycle: solvers.Up.cycle
+        blockAMGCoarsening: solvers.Up.coarseningType
+        blockAMGMinGroupSize: solvers.Up.minGroupSize
+        blockAMGMaxGroupSize: solvers.Up.maxGroupSize
+    - file: /system/MRFPUCoupledFoam.controlDict
+      parameter_scopes:
+        blockTimeSteps: endTime
+    - file: /system/MRFSimpleFoam.fvSolution
+      parameter_scopes:
+        pSolver: solvers.p.solver
+        pTolerance: pTolerance
+        pAgglomerator: solvers.p.agglomerator
+        pPreconditioner: solvers.p.preconditioner
+        pNCellsInCoarsestLevel: solvers.p.nCellsInCoarsestLevel
+        USmoother: solvers.U.smoother
+        UTolerance: UTolerance
+        pGMRESDirections: solvers.p.nDirections
+    - file: /system/MRFSimpleFoam.controlDict
+      parameter_scopes:
+        simpleTimeSteps: endTime
+
+orchestration_settings:
+  max_trials: 150
+  parallelism: 4
+  initial_seconds_between_polls: 5
+  seconds_between_polls_backoff_factor: 1.1
+  timeout_hours: 25
+  ttl_seconds_for_trials: 2400
+  global_stopping_strategy:
+    min_trials: 20
+    window_size: 5
+    improvement_bar: 0.1
+  early_stopping_strategy:
+    type: threshold
+    metric_names: [ ContinuityError ]
+    metric_threshold: 1.0
+    min_progression: 1
+    trial_indices_to_ignore: !range [0, 20]
+
+store:
+  save_to: json
+  read_from: nowhere
+  backend_options:
+    url: null
