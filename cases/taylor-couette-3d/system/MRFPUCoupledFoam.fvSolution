@@ -14,19 +14,49 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+blockTolerance 0.1;
+
 solvers
 {
     Up
     {
         solver GMRES;
         nDirections     8;
-        preconditioner  ILUC0;  // Change from Cholesky to DILU
-        tolerance       1e-5;
-        relTol          0.1;  // Add some relative tolerance
+        preconditioner  ILUC0;
+        tolerance       #calc "$blockTolerance*1e-6";
+        relTol          0;
         minIter         1;
         maxIter         1000;
+
+        cycle           F-cycle;
+        coarseningType  SAMG;
+        norm            componentNorm;
+        normComponent   3;
+        minGroupSize    4;
+        maxGroupSize    6;
+        nPreSweeps      1;
+        nPostSweeps     3;
+        groupSize       $minGroupSize;
+        minCoarseEqns   4;
+        nMaxLevels      100;
+        scale           on;
     }
 
+    p
+    {
+        solver           GAMG;
+        preconditioner   Cholesky;
+        tolerance        1e-8;
+        relTol           0.05;
+
+        smoother         GaussSeidel;
+
+        cacheAgglomeration true;
+
+        nCellsInCoarsestLevel 20;
+        agglomerator     faceAreaPair;
+        mergeLevels      1;
+    }
     k
     {
         solver           smoothSolver;
@@ -62,8 +92,7 @@ relaxationFactors
 }
 
 blockSolver {
-    convergence 1e-5;
-
+    convergence       #calc "$blockTolerance*1e-6";
     pRefCell 0;
     pRefValue 0;
 }

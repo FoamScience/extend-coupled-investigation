@@ -26,11 +26,11 @@ endTime         200;
 
 deltaT          1;
 
-writeControl    timeStep;
+writeControl    runTime;
 
 writeInterval   100;
 
-purgeWrite      0;
+purgeWrite      1;
 
 writeFormat     ascii;
 

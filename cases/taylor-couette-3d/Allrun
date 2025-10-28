@@ -12,6 +12,9 @@ solver=$1
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
+cp "./system/$solver.controlDict" ./system/controlDict
+cp "./system/$solver.fvSolution" ./system/fvSolution
+
 uv run ./scripts/generate_blockmesh_ggi.py
 runApplication blockMesh
 runApplication checkMesh
@@ -19,8 +22,6 @@ cp -rT 0.orig 0
 runApplication setSet -batch system/setSet.batch
 runApplication setsToZones -noFlipMap
 runApplication potentialFoam
-cp "./system/$solver.controlDict" ./system/controlDict
-cp "./system/$solver.fvSolution" ./system/fvSolution
 echo "Start time: $(date)"
 START_TIME=$(date +%s)
 runApplication "$solver"

@@ -6,6 +6,8 @@ FoamFile
     object      domainDict;
 }
 
+solver MRFPUCoupledFoam;
+
 mesh {
     innerRadius 0.025;
     outerRadius 0.050;
