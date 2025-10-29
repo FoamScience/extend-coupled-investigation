@@ -1,1 +1,1 @@
-/home/fadeli/repos/extend-coupled-investigation/cases/taylor-couette-3d/scripts/extract_data.py
+../taylor-couette-3d/scripts/extract_data.py

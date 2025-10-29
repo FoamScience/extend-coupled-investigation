@@ -1,1 +1,1 @@
-/home/fadeli/repos/extend-coupled-investigation/cases/taylor-couette-3d/scripts/generate_blockmesh_ggi.py
+../taylor-couette-3d/scripts/generate_blockmesh_ggi.py

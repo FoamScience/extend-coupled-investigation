@@ -1,1 +1,1 @@
-/home/fadeli/repos/extend-coupled-investigation/cases/taylor-couette-3d/scripts/case_config.py
+../taylor-couette-3d/scripts/case_config.py
