@@ -1,24 +1,40 @@
 # Investigation of FoamExtend 5.0 coupled solvers implementations
 
-## Scope
+<!-- mtoc-start:cb9ef56 -->
+
+* [Scope and Goals](#scope-and-goals)
+* [Side-effect investigation](#side-effect-investigation)
+* [Getting started](#getting-started)
+* [Quick optimization notes](#quick-optimization-notes)
+  * [Search space setup](#search-space-setup)
+  * [Current configuration to beat](#current-configuration-to-beat)
+
+<!-- mtoc-end:cb9ef56 -->
+
+## Scope and Goals
 
 - Make sure coupled and segregated versions of solvers converge to the **same solution**
 - Forming an opinion on performance preferences for coupled solver settings through case optimization
 - This mainly concerns steady-state rotating flows with MRF 
   - In laminar conditions
 
-## Goals
+The aim is to:
 
-- Finding case configurations where coupled solvers deliver roughly the same solution
+- Find case configurations, if any, where:
+  - coupled solvers deliver roughly the same solution as segregated ones
+  - coupled solvers deliver the solution more efficiently in serial setup
 
 ## Side-effect investigation
 
-- [ ] `potentialFoam` initialization before solver runs
+- [x] `potentialFoam` initialization before solver runs
+   - Seems to generally speed up the execution time by 20%-25%
 - [ ] Problems with AMI/GGI interface in/without MRF setting
 
 ## Getting started
 
-- Run the `prepare.sh` script to make sure you have the prerequisites
+- Run the `prepare.sh` script first to make sure you have the prerequisites
+
+---
 
 If you don't care about the optimization, and just want to compare solvers:
 
@@ -34,8 +50,91 @@ If you don't care about the optimization, and just want to compare solvers:
    - This is setup for comparisons between two solvers
    - Residual logs must match either `simpleFoam` style or `pUCoupledFoam` style
 
+---
 
 If you want to meddle with the optimization side:
 1. Use `foamBO` CLI as instructed by `prepare.sh` to either
    - run a new optimization
    - check on the pushed surrogate model
+
+## Quick optimization notes
+ 
+### Search space setup
+
+The parameter space is set up in a hierarchical structure as the considered parameters
+depend heavily on each other. Due to backend framework limitations, the dependency tree
+must have single root parameter; which is chosen to be the `solver`, with values
+`MRFSimpleFoam` and `MRFPUCoupledFoam`.
+
+Considered dependent parameters for `MRFSimpleFoam` are:
+```mermaid
+mindmap
+  root[MRFSimpleFoam]
+      simpleResolution
+      pSolver
+        GAMG
+          pAgglomerator
+          pPreconditioner
+          pNCellsInCoarsestLevel
+        BiCGStab
+        GMRES
+          pGMRESDirections
+        PCG
+      USmoother
+      simpleTimeSteps
+      pTolerance
+      UTolerance
+```
+
+Considered dependent parameters for `MRFPUCoupledFoam` are:
+```mermaid
+mindmap
+root[MRFPUCoupledFoam]
+  blockResolution
+  blockSolver
+    AMG
+      blockAMGCycle
+      blockAMGCoarsening
+      blockAMGMinGroupSize
+      blockAMGMaxGroupSize
+    BiCGStab
+    GMRES
+      blockGMRESDirections
+  blockTimeSteps
+  blockTolerance
+  blockPreconditioner
+```
+
+A sample optimization state is provided at `artifacts/CoupledVsSegregated_client_state.json`
+which you can explore with:
+```bash
+uvx foamBO --visualize --config MOO.yaml ++store.read_from=json
+```
+
+### Current configuration to beat
+
+Better pressure prediction:
+```json
+{
+  "solver": "MRFSimpleFoam",
+  "pSolver": "GMRES",
+  "pTolerance": 1e-5,
+  "simpleResolution": 1,
+  "simpleTimeSteps": 1213,
+  "USmoother": "GaussSeidel",
+  "UTolerance": "3e-8"
+}
+```
+
+Better velocity field prediction:
+```json
+{
+  "solver": "MRFSimpleFoam",
+  "pSolver": "PCG",
+  "pTolerance": 1e-5,
+  "simpleResolution": 1,
+  "simpleTimeSteps": 1339,
+  "USmoother": "GaussSeidel",
+  "UTolerance": "7e-8"
+}
+```
