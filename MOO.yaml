@@ -131,22 +131,23 @@ experiment:
   #- "blockAMGMinGroupSize <= blockAMGMaxGroupSize"
 
 trial_generation:
-  method: custom
-  generation_nodes:
-    - node_name: init
-      generator_specs:
-      - generator_enum: SOBOL
-        model_kwargs:
-          seed: 12345
-      transition_criteria:
-        - type: max_trials
-          threshold: 10
-          transition_to: BOM
-          use_all_trials_in_exp: true
-    - node_name: BOM
-      generator_specs:
-        - generator_enum: BOTORCH_MODULAR
-      transition_criteria: []
+  method: fast
+  # Or, for reproducibility:
+  # generation_nodes:
+  #   - node_name: init
+  #     generator_specs:
+  #     - generator_enum: SOBOL
+  #       model_kwargs:
+  #         seed: 12345
+  #     transition_criteria:
+  #       - type: max_trials
+  #         threshold: 10
+  #         transition_to: BOM
+  #         use_all_trials_in_exp: true
+  #   - node_name: BOM
+  #     generator_specs:
+  #       - generator_enum: BOTORCH_MODULAR
+  #     transition_criteria: []
                                                
 
 existing_trials:
